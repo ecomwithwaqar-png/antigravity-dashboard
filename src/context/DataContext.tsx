@@ -194,11 +194,11 @@ interface DataContextType {
     googleAdAccounts: any[];
     tiktokAdAccounts: any[];
     snapAdAccounts: any[];
-    fetchMetaBusinesses: () => Promise<void>;
-    fetchMetaAdAccounts: (businessId: string) => Promise<void>;
-    fetchGoogleAdsAccounts: () => Promise<void>;
-    fetchTikTokAdAccounts: () => Promise<void>;
-    fetchSnapAdAccounts: () => Promise<void>;
+    fetchMetaBusinesses: () => Promise<any[] | undefined>;
+    fetchMetaAdAccounts: (businessId: string) => Promise<any[] | undefined>;
+    fetchGoogleAdsAccounts: () => Promise<any[] | undefined>;
+    fetchTikTokAdAccounts: () => Promise<any[] | undefined>;
+    fetchSnapAdAccounts: () => Promise<any[] | undefined>;
 
     connectShopify: (domain: string, token: string, currency: CurrencyCode) => void;
     connectGoogleSheets: (spreadsheetUrl: string, currency: CurrencyCode) => void;
@@ -434,9 +434,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
             window.FB.login((response: any) => {
                 if (response.authResponse) {
                     const accessToken = response.authResponse.accessToken;
-                    window.FB.api('/me', (user: any) => {
+                    window.FB.api('/me', async (user: any) => {
                         setFbAuth({ accessToken, name: user.name });
-                        toast.success(`Welcome, ${user.name}!`);
+                        toast.success(`Welcome, ${user.name}! Scanning for Meta assets...`);
+
+                        // Auto-Discovery: Initial scan
+                        try {
+                            const bizUrl = `${BRIDGE_URL}/meta/v18.0/me/businesses?fields=name,id`;
+                            const bizRes = await fetch(bizUrl, {
+                                headers: { "Authorization": `Bearer ${accessToken}` }
+                            });
+                            if (bizRes.ok) {
+                                const data = await bizRes.json();
+                                const businesses = [{ id: 'me', name: 'Personal Ad Accounts' }, ...(data.data || [])];
+                                setMetaBusinesses(businesses);
+
+                                // Deep Scan: Try to pick up the first business's accounts
+                                if (businesses.length > 0) {
+                                    const firstId = businesses[0].id;
+                                    const accUrl = `${BRIDGE_URL}/meta/v18.0/${firstId}/adaccounts?fields=name,id,currency&limit=100`;
+                                    const accRes = await fetch(accUrl, { headers: { "Authorization": `Bearer ${accessToken}` } });
+                                    if (accRes.ok) {
+                                        const accData = await accRes.json();
+                                        setMetaAdAccounts(accData.data || []);
+                                        toast.success(`Neural scan complete: Found ${accData.data?.length || 0} accounts.`);
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn("Meta background discovery failed.");
+                        }
+
                         resolve();
                     });
                 } else {
@@ -465,10 +493,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 const client = window.google.accounts.oauth2.initTokenClient({
                     client_id: googleConfig.clientId,
                     scope: 'https://www.googleapis.com/auth/adwords',
-                    callback: (response: any) => {
+                    callback: async (response: any) => {
                         if (response.access_token) {
-                            setGoogleAuth({ accessToken: response.access_token, name: "Google Advertiser Account" });
-                            toast.success("Safe link established with Google Ads");
+                            const auth = { accessToken: response.access_token, name: "Google Advertiser Account" };
+                            setGoogleAuth(auth);
+                            toast.success("Safe link established with Google Ads. Initializing Neural Discovery...");
+
+                            // Auto-Discovery: Start fetching accounts immediately
+                            try {
+                                const bridgeUrl = `${BRIDGE_URL}/google/v18/customers:listAccessibleCustomers`;
+                                const accountsRes = await fetch(bridgeUrl, {
+                                    headers: {
+                                        "Authorization": `Bearer ${response.access_token}`,
+                                        "developer-token": googleConfig.developerToken,
+                                        "Content-Type": "application/json"
+                                    }
+                                });
+                                if (accountsRes.ok) {
+                                    const data = await accountsRes.json();
+                                    const accounts = (data.resourceNames || []).map((name: string) => ({
+                                        id: name.split('/')[1],
+                                        name: `Account ${name.split('/')[1]}`
+                                    }));
+                                    setGoogleAdAccounts(accounts);
+                                    if (accounts.length > 0) {
+                                        toast.success(`Discovered ${accounts.length} Google Ad accounts!`);
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn("Auto-discovery background task failed, but login succeeded.");
+                            }
+
                             resolve();
                         } else {
                             toast.error("Google Authentication Failed");
@@ -479,11 +534,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 client.requestAccessToken();
             } catch (e) {
                 console.error(e);
-                toast.error("Google Library not loaded or config invalid");
+                toast.error("Google Library not loaded or config invalid. Check your Client ID.");
                 reject(e);
             }
         });
-    }, [googleConfig.clientId]);
+    }, [googleConfig.clientId, googleConfig.developerToken]);
 
     const logoutGoogle = useCallback(() => setGoogleAuth(null), []);
 
@@ -517,7 +572,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
             const data = await response.json();
             const businesses = data.data || [];
             // Add "Personal" as a virtual business option
-            setMetaBusinesses([{ id: 'me', name: 'Personal Ad Accounts' }, ...businesses]);
+            const list = [{ id: 'me', name: 'Personal Ad Accounts' }, ...businesses];
+            setMetaBusinesses(list);
+            return list;
         } catch (e) {
             toast.error("Failed to fetch businesses");
         }
@@ -563,6 +620,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             }
 
             setMetaAdAccounts(allAccounts);
+            return allAccounts;
         } catch (e) {
             console.error("Fetch Ad Accounts Error:", e);
             toast.error("Failed to discover all ad accounts");
@@ -605,11 +663,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 name: `Account ${name.split('/')[1]}`
             }));
 
-            if (accounts.length === 0) {
-                toast.error("No accessible Google Ads customers found.");
-            }
-
             setGoogleAdAccounts(accounts);
+            return accounts;
         } catch (e: any) {
             console.error("Fetch Google Error:", e);
             if (e.name === 'SyntaxError') {
@@ -628,7 +683,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 headers: { "Authorization": `Bearer ${tiktokAuth.accessToken}` }
             });
             const data = await response.json();
-            setTiktokAdAccounts(data.data?.list || []);
+            const list = data.data?.list || [];
+            setTiktokAdAccounts(list);
+            return list;
         } catch (e) {
             console.error(e);
         }
@@ -642,7 +699,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 headers: { "Authorization": `Bearer ${snapAuth.accessToken}` }
             });
             const data = await response.json();
-            setSnapAdAccounts(data.adaccounts || []);
+            const list = data.adaccounts || [];
+            setSnapAdAccounts(list);
+            return list;
         } catch (e) {
             console.error(e);
         }

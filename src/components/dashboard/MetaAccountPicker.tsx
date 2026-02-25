@@ -5,6 +5,7 @@ import {
     ArrowRight, Loader2, X, ChevronRight, Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "react-hot-toast";
 
 interface MetaAccountPickerProps {
     onClose: () => void;
@@ -22,12 +23,28 @@ export function MetaAccountPicker({ onClose }: MetaAccountPickerProps) {
 
     useEffect(() => {
         if (fbAuth) {
-            setStep("business");
-            fetchMetaBusinesses();
+            if (metaAdAccounts.length > 0) {
+                // If only ONE account found during auto-discovery, just connect it immediately
+                if (metaAdAccounts.length === 1 && step === "login") {
+                    handleSelectAccount(metaAdAccounts[0].id);
+                    return;
+                }
+                setStep("account");
+            } else if (metaBusinesses.length > 0) {
+                // If only ONE business found (e.g. just Personal), auto-fetch its accounts
+                if (metaBusinesses.length === 1 && step === "login") {
+                    handleSelectBusiness(metaBusinesses[0].id);
+                    return;
+                }
+                setStep("business");
+            } else {
+                setStep("business");
+                fetchMetaBusinesses();
+            }
         } else {
             setStep("login");
         }
-    }, [fbAuth, fetchMetaBusinesses]);
+    }, [fbAuth, metaBusinesses.length, metaAdAccounts.length]);
 
     const handleLogin = async () => {
         setLoading(true);
@@ -35,6 +52,7 @@ export function MetaAccountPicker({ onClose }: MetaAccountPickerProps) {
             await loginWithFacebook();
         } catch (e) {
             console.error(e);
+            toast.error("Facebook Login failed. Check your browser's popup blocker or JSSDK settings.");
         } finally {
             setLoading(false);
         }
@@ -42,15 +60,20 @@ export function MetaAccountPicker({ onClose }: MetaAccountPickerProps) {
 
     const handleSelectBusiness = (id: string) => {
         setLoading(true);
-        fetchMetaAdAccounts(id).then(() => {
-            setStep("account");
+        fetchMetaAdAccounts(id).then((accounts: any) => {
             setLoading(false);
+            // If the business has exactly ONE account, just connect it!
+            if (accounts && accounts.length === 1) {
+                handleSelectAccount(accounts[0].id);
+            } else {
+                setStep("account");
+            }
         });
     };
 
     const handleSelectAccount = (accId: string) => {
         const account = metaAdAccounts.find(a => a.id === accId);
-        // Strip 'act_' prefix if present, connectMetaAds expects the raw ID or specific format
+        // Strip 'act_' prefix if present
         const cleanId = accId.replace('act_', '');
 
         // Use detected currency or fallback to dashboard currency
@@ -110,6 +133,12 @@ export function MetaAccountPicker({ onClose }: MetaAccountPickerProps) {
                             >
                                 {loading ? <Loader2 className="animate-spin" size={20} /> : <><Facebook fill="white" size={18} /> Login with Facebook</>}
                             </button>
+                            <div className="pt-2 px-6">
+                                <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1.5 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5">
+                                    <Globe size={12} className="text-blue-400 shrink-0" />
+                                    <span>If login fails, ensure <b>"Login with JavaScript SDK"</b> is toggled to <b>Yes</b> in your Meta App Settings.</span>
+                                </p>
+                            </div>
                         </div>
                     )}
 
