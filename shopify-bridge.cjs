@@ -1,6 +1,6 @@
 const http = require('http');
 const https = require('https');
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // ─── MASTER CONFIG ──────────────────────────────────────────────────────────
 // Update these to your real credentials once for a "Direct" experience.

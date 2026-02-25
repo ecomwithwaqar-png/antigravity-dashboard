@@ -9,6 +9,9 @@ declare global {
 }
 
 
+// ─── Configuration ──────────────────────────────────────────────────────────
+const BRIDGE_URL = import.meta.env.VITE_BRIDGE_URL || "http://localhost:3001";
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface DataRecord {
@@ -507,7 +510,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const fetchMetaBusinesses = useCallback(async () => {
         if (!fbAuth) return;
         try {
-            const bridgeUrl = `http://localhost:3001/meta/v18.0/me/businesses?fields=name,id`;
+            const bridgeUrl = `${BRIDGE_URL}/meta/v18.0/me/businesses?fields=name,id`;
             const response = await fetch(bridgeUrl, {
                 headers: { "Authorization": `Bearer ${fbAuth.accessToken}` }
             });
@@ -525,10 +528,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setMetaAdAccounts([]); // Clear previous results to show loading state
         try {
             let allAccounts: any[] = [];
-            let nextUrl = `http://localhost:3001/meta/v18.0/${businessId}/adaccounts?fields=name,id,currency&limit=100`;
+            let nextUrl = `${BRIDGE_URL}/meta/v18.0/${businessId}/adaccounts?fields=name,id,currency&limit=100`;
 
             if (businessId === 'me') {
-                nextUrl = `http://localhost:3001/meta/v18.0/me/adaccounts?fields=name,id,currency&limit=100`;
+                nextUrl = `${BRIDGE_URL}/meta/v18.0/me/adaccounts?fields=name,id,currency&limit=100`;
             }
 
             // Loop to handle potential pagination from Meta
@@ -545,7 +548,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 if (data.paging?.next) {
                     // Convert the full URL to a proxied bridge URL
                     const urlObj = new URL(data.paging.next);
-                    nextUrl = `http://localhost:3001/meta${urlObj.pathname}${urlObj.search}`;
+                    nextUrl = `${BRIDGE_URL}/meta${urlObj.pathname}${urlObj.search}`;
                 } else {
                     nextUrl = "";
                 }
@@ -553,7 +556,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
             // Fallback for businesses if the direct adaccounts list is empty
             if (allAccounts.length === 0 && businessId !== 'me') {
-                const altUrl = `http://localhost:3001/meta/v18.0/${businessId}/owned_ad_accounts?fields=name,id,currency&limit=100`;
+                const altUrl = `${BRIDGE_URL}/meta/v18.0/${businessId}/owned_ad_accounts?fields=name,id,currency&limit=100`;
                 const altRes = await fetch(altUrl, { headers: { "Authorization": `Bearer ${fbAuth.accessToken}` } });
                 const altData = await altRes.json();
                 allAccounts = altData.data || [];
@@ -569,7 +572,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const fetchGoogleAdsAccounts = useCallback(async () => {
         if (!googleAuth) return;
         try {
-            const bridgeUrl = `http://localhost:3001/google/v18/customers:listAccessibleCustomers`;
+            const bridgeUrl = `${BRIDGE_URL}/google/v18/customers:listAccessibleCustomers`;
             const response = await fetch(bridgeUrl, {
                 headers: {
                     "Authorization": `Bearer ${googleAuth.accessToken}`,
@@ -620,7 +623,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const fetchTikTokAdAccounts = useCallback(async () => {
         if (!tiktokAuth) return;
         try {
-            const bridgeUrl = `http://localhost:3001/tiktok/v1.3/advertiser/info/`;
+            const bridgeUrl = `${BRIDGE_URL}/tiktok/v1.3/advertiser/info/`;
             const response = await fetch(bridgeUrl, {
                 headers: { "Authorization": `Bearer ${tiktokAuth.accessToken}` }
             });
@@ -634,7 +637,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const fetchSnapAdAccounts = useCallback(async () => {
         if (!snapAuth) return;
         try {
-            const bridgeUrl = `http://localhost:3001/snapchat/v1/me/adaccounts`;
+            const bridgeUrl = `${BRIDGE_URL}/snapchat/v1/me/adaccounts`;
             const response = await fetch(bridgeUrl, {
                 headers: { "Authorization": `Bearer ${snapAuth.accessToken}` }
             });
@@ -1122,7 +1125,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const fetchShopifyData = useCallback(async (shop: string, token: string) => {
         const directUrl = `https://${shop}/admin/api/2024-01/orders.json?status=any&limit=250`;
-        const bridgeUrl = `http://localhost:3001/${shop}/admin/api/2024-01/orders.json?status=any&limit=250`;
+        const bridgeUrl = `${BRIDGE_URL}/${shop}/admin/api/2024-01/orders.json?status=any&limit=250`;
 
         // Try bridge first to bypass CORS
         let response;
@@ -1192,7 +1195,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         try {
             if (token === "demo") return { success: true, message: "Demo Node Optimal" };
 
-            const bridgeUrl = `http://localhost:3001/meta/v18.0/act_${accId}?fields=name`;
+            const bridgeUrl = `${BRIDGE_URL}/meta/v18.0/act_${accId}?fields=name`;
             const response = await fetch(bridgeUrl, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -1264,7 +1267,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
             // Real Meta Graph API Call via Bridge
             // GET graph.facebook.com/v18.0/act_{accId}/insights?fields=spend,date_start&level=account&time_increment=1
-            const bridgeUrl = `http://localhost:3001/meta/v18.0/act_${accId}/insights?fields=spend,date_start&level=account&time_increment=1&date_preset=maximum`;
+            const bridgeUrl = `${BRIDGE_URL}/meta/v18.0/act_${accId}/insights?fields=spend,date_start&level=account&time_increment=1&date_preset=maximum`;
 
             const response = await fetch(bridgeUrl, {
                 headers: {
@@ -1314,7 +1317,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
             // Cleanup Customer ID (remove dashes if present, Google API wants digits only)
             const cleanId = customerId.replace(/-/g, '');
-            const bridgeUrl = `http://localhost:3001/google/v18/customers/${cleanId}/googleAds:search`;
+            const bridgeUrl = `${BRIDGE_URL}/google/v18/customers/${cleanId}/googleAds:search`;
 
             // Query for last 30 days of spend
             const query = {
