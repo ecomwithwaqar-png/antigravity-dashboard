@@ -82,26 +82,78 @@ const server = http.createServer((req, res) => {
 
         log(`[Shopify-OAuth] Exchanging code for token for shop: ${shop}`);
 
-        // In a real app, you'd exchange the code here.
-        // For this bridge, we'll show a "Success" page that the frontend can pick up.
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(`
-            <html>
-                <body style="background:#0f0a1a; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;">
-                    <div style="background:rgba(255,255,255,0.05); padding:40px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); text-align:center;">
-                        <h1 style="color:#10b981;">Sync Established!</h1>
-                        <p>OAuth Code: <code style="background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:10px;">${code}</code></p>
-                        <p style="opacity:0.6; font-size:12px;">Copy this code back to the dashboard if the window doesn't close automatically.</p>
-                        <button onclick="window.close()" style="background:#10b981; color:white; border:none; padding:12px 30px; border-radius:15px; font-weight:bold; cursor:pointer; margin-top:20px;">Return to Dashboard</button>
-                    </div>
-                    <script>
-                        if (window.opener) {
-                            window.opener.postMessage({ type: 'SHOPIFY_AUTH_SUCCESS', code: '${code}', shop: '${shop}' }, '*');
-                        }
-                    </script>
-                </body>
-            </html>
-        `);
+        const postData = JSON.stringify({
+            client_id: MASTER_CONFIG.SHOPIFY_API_KEY,
+            client_secret: MASTER_CONFIG.SHOPIFY_API_SECRET,
+            code: code
+        });
+
+        const options = {
+            hostname: shop,
+            path: '/admin/oauth/access_token',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+
+        const exchangeReq = https.request(options, (exchangeRes) => {
+            let resBody = '';
+            exchangeRes.on('data', chunk => resBody += chunk);
+            exchangeRes.on('end', () => {
+                try {
+                    const data = JSON.parse(resBody);
+                    if (exchangeRes.statusCode === 200 && data.access_token) {
+                        const accessToken = data.access_token;
+                        log(`[Shopify-OAuth] Token exchange successful for ${shop}`);
+
+                        res.writeHead(200, { 'Content-Type': 'text/html' });
+                        res.end(`
+                            <html>
+                                <body style="background:#0f0a1a; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0;">
+                                    <div style="background:rgba(255,255,255,0.05); padding:40px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); text-align:center; max-width: 400px;">
+                                        <div style="width:60px; height:60px; background:#10b981; border-radius:20px; display:flex; align-items:center; justify-content:center; margin: 0 auto 20px;">
+                                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        </div>
+                                        <h1 style="color:#10b981; margin:0 0 10px 0;">Sync Established</h1>
+                                        <p style="opacity:0.7; font-size:14px; line-height:1.5;">Your store connection is now live. This window will close automatically.</p>
+                                        <button onclick="window.close()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:12px 30px; border-radius:15px; font-weight:bold; cursor:pointer; margin-top:20px; transition: background 0.2s;">Close Window</button>
+                                    </div>
+                                    <script>
+                                        if (window.opener) {
+                                            window.opener.postMessage({ 
+                                                type: 'SHOPIFY_AUTH_SUCCESS', 
+                                                token: '${accessToken}', 
+                                                shop: '${shop}' 
+                                            }, '*');
+                                            setTimeout(() => window.close(), 1500);
+                                        }
+                                    </script>
+                                </body>
+                            </html>
+                        `);
+                    } else {
+                        log(`[Shopify-OAuth] Exchange failed: ${resBody}`);
+                        res.writeHead(exchangeRes.statusCode || 500);
+                        res.end(`Exchange Failed: ${data.error_description || data.error || resBody}`);
+                    }
+                } catch (e) {
+                    log(`[Shopify-OAuth] Parse Error: ${e.message} | Body: ${resBody}`);
+                    res.writeHead(500);
+                    res.end(`Internal Server Error during exchange: ${e.message}`);
+                }
+            });
+        });
+
+        exchangeReq.on('error', (e) => {
+            log(`[Shopify-OAuth] Request Error: ${e.message}`);
+            res.writeHead(500);
+            res.end(`Network Error during exchange: ${e.message}`);
+        });
+
+        exchangeReq.write(postData);
+        exchangeReq.end();
         return;
     }
 

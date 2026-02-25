@@ -1,0 +1,30 @@
+[2026-02-25T19:37:56.859Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T19:40:27.412Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T19:40:48.691Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T19:48:34.256Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T19:48:35.750Z] [Bridge] GET /shopify/callback?code=bbbd6d9a549a3f26bbbc1be459207c69&hmac=c205817926ccd3b2d873a18fb56ced067bf7ed77b9dee15ff10864bb7abda847&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772048913
+[2026-02-25T19:48:35.753Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T19:48:35.890Z] [Bridge] GET /meta.json
+[2026-02-25T19:48:35.893Z] [Bridge] GET /favicon.ico
+[2026-02-25T19:49:15.974Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T19:49:17.253Z] [Bridge] GET /shopify/callback?code=1e37283dc8263305953da8214a0585d7&hmac=015be475c053e1a100cfd066c9d76ea6c3210977882bd5cdeaf54e34720860a3&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772048955
+[2026-02-25T19:49:17.255Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T19:49:17.392Z] [Bridge] GET /meta.json
+[2026-02-25T19:49:17.393Z] [Bridge] GET /favicon.ico
+[2026-02-25T19:50:05.655Z] [Bridge] OPTIONS /3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T19:50:05.657Z] [Bridge] GET /3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T19:50:05.658Z] [Proxy] Requesting: GET https://3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T19:50:05.659Z] [Proxy] Headers: ["Content-Type","Accept","Host","User-Agent","X-Shopify-Access-Token","developer-token"]
+[2026-02-25T19:50:06.061Z] [Proxy] Response: 401 from 3pnuzs-rq.myshopify.com
+[2026-02-25T19:50:06.067Z] [Proxy Error Body] {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+[2026-02-25T19:50:18.809Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T19:50:20.178Z] [Bridge] GET /shopify/callback?code=f327b3424a4f0ebf22c5b1860ba80091&hmac=c7c92009182eddfad19d2e5609b68803344a6b938da794e2fd002562e73e9cee&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772049018
+[2026-02-25T19:50:20.179Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T19:50:20.330Z] [Bridge] GET /favicon.ico
+[2026-02-25T19:50:20.330Z] [Bridge] GET /meta.json
+[2026-02-25T19:50:28.281Z] [Bridge] OPTIONS /3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T19:50:28.283Z] [Bridge] GET /3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T19:50:28.283Z] [Proxy] Requesting: GET https://3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T19:50:28.284Z] [Proxy] Headers: ["Content-Type","Accept","Host","User-Agent","X-Shopify-Access-Token","developer-token"]
+[2026-02-25T19:50:28.874Z] [Proxy] Response: 401 from 3pnuzs-rq.myshopify.com
+[2026-02-25T19:50:28.876Z] [Proxy Error Body] {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}

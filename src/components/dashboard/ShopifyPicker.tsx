@@ -20,9 +20,9 @@ export function ShopifyPicker({ onClose }: ShopifyPickerProps) {
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             if (event.data?.type === 'SHOPIFY_AUTH_SUCCESS') {
-                const { code, shop } = event.data;
+                const { token, shop } = event.data;
                 setDomain(shop);
-                setToken(`shpat_${code}`); // In a real flow, the bridge would exchange this, we'll simulate for now
+                setToken(token);
                 setStep(2);
                 toast.success("Security handshake complete!");
             }
