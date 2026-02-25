@@ -3,13 +3,26 @@ const https = require('https');
 const fs = require('fs');
 const PORT = process.env.PORT || 3001;
 
+// Load .env file manually
+try {
+    const envPath = require('path').join(__dirname, '.env');
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        envContent.split('\n').forEach(line => {
+            const [key, ...value] = line.split('=');
+            if (key && value) process.env[key.trim()] = value.join('=').trim();
+        });
+    }
+} catch (e) {
+    console.warn("Could not load .env file:", e.message);
+}
+
 // ─── MASTER CONFIG ──────────────────────────────────────────────────────────
-// Update these to your real credentials once for a "Direct" experience.
 const MASTER_CONFIG = {
-    GOOGLE_DEVELOPER_TOKEN: 'yLB0NLuGwKPYlHzFlHzp-A',
-    GOOGLE_CLIENT_ID: '695971374779-lgutit2vr7hseki58mo07ksphdg33i3g.apps.googleusercontent.com',
-    SHOPIFY_API_KEY: '99d220345090a518f8b67a8f5418318c', // Optional: Put your Shopify App Client ID here for "One-Click"
-    SHOPIFY_API_SECRET: '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',
+    GOOGLE_DEVELOPER_TOKEN: process.env.GOOGLE_DEVELOPER_TOKEN || 'yLB0NLuGwKPYlHzFlHzp-A',
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '695971374779-lgutit2vr7hseki58mo07ksphdg33i3g.apps.googleusercontent.com',
+    SHOPIFY_API_KEY: process.env.SHOPIFY_API_KEY || '',
+    SHOPIFY_API_SECRET: process.env.SHOPIFY_API_SECRET || '',
     REDIRECT_URI: 'http://localhost:3001/shopify/callback'
 };
 // ─────────────────────────────────────────────────────────────────────────────
