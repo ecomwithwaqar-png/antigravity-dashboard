@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base Dark Theme Colors - Royal Purple Style */
+    --background: 265 40% 5%;    /* Very deep purple-black #0f0f1e -> hsl(265, 40%, 5%) */
+    --foreground: 210 40% 98%;   /* White text */
+
+    --card: 265 30% 10%;         /* Slightly lighter purple for cards #1a1a2e */
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 265 30% 10%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 263 90% 66%;      /* Vivid Purple #8b5cf6 */
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 265 20% 20%;    /* Muted purple-grey */
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 265 20% 20%;
+    --muted-foreground: 265 10% 70%;
+ 
+    --accent: 263 90% 66%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 265 30% 20%;       /* Subtle purple border rgba(139, 92, 246, 0.2) approx */
+    --input: 265 30% 20%;
+    --ring: 263 90% 66%;
+ 
+    --radius: 0.75rem;
+  }
+ 
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 265 40% 5%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 265 40% 5%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 265 40% 5%;
+ 
+    --primary: 263 90% 66%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 265 10% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 265 10% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 265 10% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 263 90% 66%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Glassmorphism Utilities */
+.glass-card {
+  @apply bg-white/5 backdrop-blur-md border border-purple-500/20 shadow-lg shadow-purple-900/20;
+}
+.glass-card-hover {
+  @apply hover:border-purple-500/40 hover:shadow-purple-500/20 transition-all duration-300;
+}
+
+@keyframes infinite-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-infinite-scroll {
+  animation: infinite-scroll 40s linear infinite;
+}

@@ -1,0 +1,6 @@
+﻿
+> purchase-dashboard@0.0.0 build
+> tsc && vite build
+
+src/components/dashboard/RevenueChart.tsx(12,43): error TS6133: 'label' is declared but its value is never read.
+src/components/theme-provider.tsx(59,10): error TS2741: Property 'value' is missing in type '{ children: ReactNode; theme: Theme; setTheme: (theme: Theme) => void; }' but required in type 'ProviderProps<ThemeProviderState>'.
