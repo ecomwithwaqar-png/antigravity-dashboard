@@ -1,5 +1,6 @@
 const http = require('http');
 const https = require('https');
+const fs = require('fs');
 const PORT = process.env.PORT || 3001;
 
 // ─── MASTER CONFIG ──────────────────────────────────────────────────────────
@@ -7,19 +8,29 @@ const PORT = process.env.PORT || 3001;
 const MASTER_CONFIG = {
     GOOGLE_DEVELOPER_TOKEN: 'yLB0NLuGwKPYlHzFlHzp-A',
     GOOGLE_CLIENT_ID: '695971374779-lgutit2vr7hseki58mo07ksphdg33i3g.apps.googleusercontent.com',
-    SHOPIFY_API_KEY: '', // Optional: Put your Shopify App Client ID here for "One-Click"
-    SHOPIFY_API_SECRET: '',
+    SHOPIFY_API_KEY: '99d220345090a518f8b67a8f5418318c', // Optional: Put your Shopify App Client ID here for "One-Click"
+    SHOPIFY_API_SECRET: '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',
     REDIRECT_URI: 'http://localhost:3001/shopify/callback'
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
+const log = (msg) => {
+    const line = `[${new Date().toISOString()}] ${msg}\n`;
+    console.log(msg);
+    try {
+        fs.appendFileSync('c:/Users/farma/OneDrive/Desktop/ANTIGRAVITY/purchase-dashboard/bridge.log', line);
+    } catch (e) {
+        console.error("LOG ERROR:", e.message);
+    }
+};
+
 const server = http.createServer((req, res) => {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'X-Shopify-Access-Token, Authorization, Content-Type, developer-token');
 
-    console.log(`[Bridge] ${req.method} ${req.url}`);
+    log(`[Bridge] ${req.method} ${req.url}`);
     if (req.method === 'OPTIONS') {
         res.writeHead(204);
         res.end();
@@ -37,7 +48,9 @@ const server = http.createServer((req, res) => {
                 'Content-Type': 'application/json'
             }
         };
+        log(`[Debug-Google] Requesting: ${options.method} https://${options.hostname}${options.path}`);
         const pReq = https.request(options, (pRes) => {
+            log(`[Debug-Google] Response: ${pRes.statusCode}`);
             res.writeHead(pRes.statusCode, pRes.headers);
             pRes.pipe(res);
         });
@@ -59,10 +72,36 @@ const server = http.createServer((req, res) => {
     }
 
     if (req.url.startsWith('/shopify/callback')) {
-        // This would handle the code -> token exchange
-        // For local use, we usually stick to Custom Apps, but this route is ready for Public Apps.
         const code = params.get('code');
-        res.end(`OAuth Success! Copy this code to the bridge or configure secret: ${code}`);
+        const shop = params.get('shop');
+
+        if (!code || !shop) {
+            res.end(`Missing code or shop. Params: ${queryString}`);
+            return;
+        }
+
+        log(`[Shopify-OAuth] Exchanging code for token for shop: ${shop}`);
+
+        // In a real app, you'd exchange the code here.
+        // For this bridge, we'll show a "Success" page that the frontend can pick up.
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(`
+            <html>
+                <body style="background:#0f0a1a; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;">
+                    <div style="background:rgba(255,255,255,0.05); padding:40px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); text-align:center;">
+                        <h1 style="color:#10b981;">Sync Established!</h1>
+                        <p>OAuth Code: <code style="background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:10px;">${code}</code></p>
+                        <p style="opacity:0.6; font-size:12px;">Copy this code back to the dashboard if the window doesn't close automatically.</p>
+                        <button onclick="window.close()" style="background:#10b981; color:white; border:none; padding:12px 30px; border-radius:15px; font-weight:bold; cursor:pointer; margin-top:20px;">Return to Dashboard</button>
+                    </div>
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({ type: 'SHOPIFY_AUTH_SUCCESS', code: '${code}', shop: '${shop}' }, '*');
+                        }
+                    </script>
+                </body>
+            </html>
+        `);
         return;
     }
 
@@ -77,9 +116,6 @@ const server = http.createServer((req, res) => {
 
     // Handle encoded characters like colons (:) which Google Ads requires literal
     targetPath = decodeURIComponent(targetPath);
-
-    console.log(`[Bridge] Incoming Request: ${req.url}`);
-    console.log(`[Proxy Mapping] ${urlParts[0]} -> ${targetHost} | Path: ${targetPath}`);
 
     // Handle special cases for common platforms if host isn't fully qualified
     if (targetHost === 'meta') targetHost = 'graph.facebook.com';
@@ -98,7 +134,7 @@ const server = http.createServer((req, res) => {
     const isMock = authHeader.includes('simulated') || authHeader.includes('demo');
 
     if (isMock) {
-        console.log(`[Proxy] Returning MOCK data for: ${targetHost}${targetPath}`);
+        log(`[Proxy] Returning MOCK data for: ${targetHost}${targetPath}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
 
         let mockData = {};
@@ -130,10 +166,7 @@ const server = http.createServer((req, res) => {
     const devToken = req.headers['developer-token'] || MASTER_CONFIG.GOOGLE_DEVELOPER_TOKEN;
     if (devToken && devToken !== 'YOUR_DEVELOPER_TOKEN_HERE') {
         headers['developer-token'] = devToken;
-        headers['developer-token'] = devToken;
     }
-
-    console.log(`[Proxy] Proxying to: https://${targetHost}${targetPath}`);
 
     const options = {
         hostname: targetHost,
@@ -142,27 +175,17 @@ const server = http.createServer((req, res) => {
         headers: headers
     };
 
-    const log = (msg) => {
-        const line = `[${new Date().toISOString()}] ${msg}\n`;
-        console.log(msg);
-        try {
-            require('fs').appendFileSync('c:/Users/farma/OneDrive/Desktop/ANTIGRAVITY/purchase-dashboard/bridge.log', line);
-        } catch (e) { }
-    };
-
     log(`[Proxy] Requesting: ${options.method} https://${options.hostname}${options.path}`);
-    log(`[Proxy] Host: ${targetHost}`);
-    log(`[Proxy] Path: ${targetPath}`);
     log(`[Proxy] Headers: ${JSON.stringify(Object.keys(options.headers))}`);
 
     const proxyReq = https.request(options, (proxyRes) => {
         log(`[Proxy] Response: ${proxyRes.statusCode} from ${targetHost}`);
 
-        if (proxyRes.statusCode === 404) {
+        if (proxyRes.statusCode >= 400) {
             let body = '';
             proxyRes.on('data', chunk => body += chunk);
             proxyRes.on('end', () => {
-                log(`[Proxy 404 Body] ${body}`);
+                log(`[Proxy Error Body] ${body}`);
             });
         }
 
@@ -171,7 +194,7 @@ const server = http.createServer((req, res) => {
     });
 
     proxyReq.on('error', (e) => {
-        console.error(`[Proxy Error] ${e.message}`);
+        log(`[Proxy Error] ${e.message}`);
         res.writeHead(500);
         res.end(e.message);
     });
