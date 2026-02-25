@@ -145,7 +145,8 @@ export function GoogleAdsPicker({ onClose }: GoogleAdsPickerProps) {
                                 <div className="py-8 text-center space-y-4">
                                     <div className="space-y-2">
                                         <AlertCircle className="mx-auto text-red-500/50" size={32} />
-                                        <p className="text-sm text-muted-foreground px-6">Automatic discovery failed (Google API 404).</p>
+                                        <p className="text-sm text-muted-foreground px-6">Automatic account discovery returned no results.</p>
+                                        <p className="text-[10px] text-muted-foreground px-10">This can happen if your account has no CID associated or if the API connection is restricted.</p>
                                     </div>
 
                                     <div className="pt-4 border-t border-white/5 space-y-3 text-left">

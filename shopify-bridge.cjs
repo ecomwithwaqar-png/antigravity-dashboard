@@ -75,6 +75,9 @@ const server = http.createServer((req, res) => {
     let targetHost = urlParts[0];
     let targetPath = '/' + urlParts.slice(1).join('/') + queryString;
 
+    // Handle encoded characters like colons (:) which Google Ads requires literal
+    targetPath = decodeURIComponent(targetPath);
+
     console.log(`[Bridge] Incoming Request: ${req.url}`);
     console.log(`[Proxy Mapping] ${urlParts[0]} -> ${targetHost} | Path: ${targetPath}`);
 
