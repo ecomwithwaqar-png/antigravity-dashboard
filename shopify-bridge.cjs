@@ -142,16 +142,28 @@ const server = http.createServer((req, res) => {
         headers: headers
     };
 
-    console.log(`[Proxy] Requesting: ${options.method} https://${options.hostname}${options.path}`);
-    console.log(`[Proxy] Headers: ${JSON.stringify(Object.keys(options.headers))}`);
+    const log = (msg) => {
+        const line = `[${new Date().toISOString()}] ${msg}\n`;
+        console.log(msg);
+        try {
+            require('fs').appendFileSync('c:/Users/farma/OneDrive/Desktop/ANTIGRAVITY/purchase-dashboard/bridge.log', line);
+        } catch (e) { }
+    };
+
+    log(`[Proxy] Requesting: ${options.method} https://${options.hostname}${options.path}`);
+    log(`[Proxy] Host: ${targetHost}`);
+    log(`[Proxy] Path: ${targetPath}`);
+    log(`[Proxy] Headers: ${JSON.stringify(Object.keys(options.headers))}`);
 
     const proxyReq = https.request(options, (proxyRes) => {
-        console.log(`[Proxy] Response: ${proxyRes.statusCode} from ${targetHost}`);
+        log(`[Proxy] Response: ${proxyRes.statusCode} from ${targetHost}`);
 
         if (proxyRes.statusCode === 404) {
             let body = '';
             proxyRes.on('data', chunk => body += chunk);
-            proxyRes.on('end', () => console.log(`[Proxy 404 Body] ${body}`));
+            proxyRes.on('end', () => {
+                log(`[Proxy 404 Body] ${body}`);
+            });
         }
 
         res.writeHead(proxyRes.statusCode, proxyRes.headers);
