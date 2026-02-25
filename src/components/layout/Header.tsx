@@ -5,13 +5,16 @@ export function Header() {
     const { setTheme, theme } = useTheme();
 
     return (
-        <header className="flex items-center justify-between py-6 px-1">
-            <div>
-                <div className="flex items-center gap-2 text-white mb-1">
-                    <span className="text-2xl animate-wave origin-bottom-right inline-block">👋</span>
-                    <h1 className="text-2xl font-bold">Hello, Devon Lane</h1>
+        <header className="flex flex-col md:flex-row md:items-center justify-between py-6 px-1 gap-6">
+            <div className="flex items-center justify-between w-full md:w-auto">
+                <div>
+                    <div className="flex items-center gap-2 text-white mb-1">
+                        <span className="text-2xl animate-wave origin-bottom-right inline-block">🚀</span>
+                        <h1 className="text-2xl font-black italic tracking-tighter uppercase">Waqar Ahmed</h1>
+                    </div>
+                    <p className="text-muted-foreground text-[10px] uppercase font-black tracking-[0.2em]">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                 </div>
-                <p className="text-muted-foreground text-sm">23 January 2026</p>
+                {/* Mobile Search/Settings Mini Toggle could go here if needed, but we have MobileNav */}
             </div>
 
             <div className="flex items-center gap-4">

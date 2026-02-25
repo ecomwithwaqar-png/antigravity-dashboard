@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ActivityChart } from "@/components/dashboard/ActivityChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { AssetsChart } from "@/components/dashboard/AssetsChart";
@@ -14,13 +15,23 @@ import { CODMarketInsights } from "@/components/dashboard/CODMarketInsights";
 import { PredictiveAnalytics } from "@/components/dashboard/PredictiveAnalytics";
 import { SettlementTracker } from "@/components/dashboard/SettlementTracker";
 import { LogisticsSmartRouter } from "@/components/dashboard/LogisticsSmartRouter";
+import { Tabs } from "@/components/ui/tabs-premium";
+import { LayoutDashboard, Zap, Activity, Database } from "lucide-react";
 
 export default function Dashboard() {
     const { data, lastSyncTime, formatPKT } = useData();
+    const [activeTab, setActiveTab] = useState("overview");
     const hasData = data.length > 0;
 
+    const tabs = [
+        { id: "overview", label: "Overview", icon: LayoutDashboard },
+        { id: "operations", label: "Operations", icon: Activity },
+        { id: "intelligence", label: "Intelligence", icon: Zap },
+        { id: "data", label: "Connect", icon: Database },
+    ];
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-24 md:pb-0">
             {/* Header & View Switcher */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -41,54 +52,63 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Executive KPIs (The 4 Pillars) */}
-            <MetricsOverview view="pillars" />
+            {/* Navigation Tabs */}
+            <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-            {/* Pakistan COD Market Insights & Predictive Intelligence */}
-            <div className="space-y-6">
-                <CODMarketInsights />
-                <PredictiveAnalytics />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Side Management Column (P&L + SKU Ops) */}
-                <div className="lg:col-span-1 space-y-6">
-                    <FinancialPLSummary />
-                    <ProductLeaderboard />
-                    <LogisticsSmartRouter />
-                    <SettlementTracker />
-                </div>
-
-                {/* Main Growth & Marketing Column */}
-                <div className="lg:col-span-3 space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <AntiGravityAI />
-                        <div className="space-y-6">
-                            <DataUpload />
-                            <IntegrationsPanel />
+            {/* Tab Content */}
+            <div className="mt-8 transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
+                {activeTab === "overview" && (
+                    <div className="space-y-8">
+                        <MetricsOverview view="pillars" />
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 space-y-6">
+                                <RevenueChart />
+                                <MetricsOverview view="detailed" />
+                            </div>
+                            <div className="lg:col-span-1 space-y-6">
+                                <AntiGravityAI />
+                                <RecentSales />
+                            </div>
                         </div>
                     </div>
+                )}
 
-                    <div className="bg-secondary/20 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
-                        <RevenueChart />
+                {activeTab === "operations" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-1 space-y-6">
+                            <ProductLeaderboard />
+                            <ActivityChart />
+                        </div>
+                        <div className="lg:col-span-2 space-y-6">
+                            <LogisticsSmartRouter />
+                            <SettlementTracker />
+                        </div>
                     </div>
+                )}
 
-                    {/* Detailed Metrics Detail */}
-                    <MetricsOverview view="detailed" />
-                </div>
-            </div>
+                {activeTab === "intelligence" && (
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <CODMarketInsights />
+                            <PredictiveAnalytics />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-1">
+                                <FinancialPLSummary />
+                            </div>
+                            <div className="lg:col-span-2">
+                                <AssetsChart />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-            {/* Bottom Row - Activity & Recent Data */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1 bg-secondary/20 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
-                    <AssetsChart />
-                </div>
-                <div className="lg:col-span-1 bg-secondary/20 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
-                    <RecentSales />
-                </div>
-                <div className="lg:col-span-1 bg-secondary/20 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
-                    <ActivityChart />
-                </div>
+                {activeTab === "data" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
+                        <DataUpload />
+                        <IntegrationsPanel />
+                    </div>
+                )}
             </div>
         </div>
     );
