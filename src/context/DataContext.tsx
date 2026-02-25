@@ -629,6 +629,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const fetchGoogleAdsAccounts = useCallback(async () => {
         if (!googleAuth) return;
+        setGoogleAdAccounts([]); // Clear previous results
         try {
             const bridgeUrl = `${BRIDGE_URL}/google/v18/customers:listAccessibleCustomers`;
             const response = await fetch(bridgeUrl, {

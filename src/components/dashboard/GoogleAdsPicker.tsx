@@ -21,12 +21,22 @@ export function GoogleAdsPicker({ onClose }: GoogleAdsPickerProps) {
     const [loading, setLoading] = useState(false);
     const hasConfig = googleConfig.clientId && googleConfig.developerToken;
 
+    const [connecting, setConnecting] = useState(false);
+
     useEffect(() => {
         if (googleAuth) {
-            setLoading(true);
-            fetchGoogleAdsAccounts().finally(() => setLoading(false));
+            if (googleAdAccounts.length > 0) {
+                // One-click Auto Connection: If only one account discovered, link it immediately
+                if (googleAdAccounts.length === 1 && !connecting) {
+                    handleSelectAccount(googleAdAccounts[0].id);
+                    return;
+                }
+            } else {
+                setLoading(true);
+                fetchGoogleAdsAccounts().finally(() => setLoading(false));
+            }
         }
-    }, [googleAuth, fetchGoogleAdsAccounts]);
+    }, [googleAuth, googleAdAccounts.length]);
 
     const handleLogin = async () => {
         setLoading(true);
@@ -40,6 +50,7 @@ export function GoogleAdsPicker({ onClose }: GoogleAdsPickerProps) {
     };
 
     const handleSelectAccount = (id: string) => {
+        setConnecting(true);
         connectGoogleAds(id, googleAuth?.accessToken || "", currency);
         onClose();
     };
