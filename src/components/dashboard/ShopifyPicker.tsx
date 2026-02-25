@@ -21,15 +21,31 @@ export function ShopifyPicker({ onClose }: ShopifyPickerProps) {
         const handleMessage = (event: MessageEvent) => {
             if (event.data?.type === 'SHOPIFY_AUTH_SUCCESS') {
                 const { token, shop } = event.data;
+                const finalDomain = shop.includes(".") ? shop : `${shop}.myshopify.com`;
+
                 setDomain(shop);
                 setToken(token);
                 setStep(2);
-                toast.success("Security handshake complete!");
+
+                // One-Click Auto Connect: Initiate sync immediately after handshake
+                toast.success("Security handshake complete! Establishing Neural Sync...");
+                setLoading(true);
+
+                (async () => {
+                    try {
+                        await connectShopify(finalDomain, token, currency);
+                        onClose();
+                    } catch (err: any) {
+                        console.error("Auto-sync failed:", err);
+                        setLoading(false);
+                        toast.error(err.message || "Sync failed");
+                    }
+                })();
             }
         };
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, []);
+    }, [connectShopify, currency, onClose]);
 
     const handleOneClick = () => {
         if (!domain) {
