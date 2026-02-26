@@ -1,6 +1,7 @@
 import { LayoutDashboard, FileText, History, Radio, LogOut, Zap, Activity, Shield, BarChart3, Globe, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const mainNavigation = [
     { icon: LayoutDashboard, label: "Command Center", href: "/" },
@@ -22,6 +23,7 @@ const utilityItems = [
 
 export function Sidebar() {
     const location = useLocation();
+    const { signOut, user } = useAuth();
 
     return (
         <aside className="w-72 border-r border-white/5 bg-[#0a0a0c]/80 backdrop-blur-2xl h-screen sticky top-0 flex flex-col p-6 hidden md:flex shrink-0">
@@ -118,14 +120,17 @@ export function Sidebar() {
             <div className="mt-auto pt-6 border-t border-white/5">
                 <div className="flex items-center gap-4 px-2 mb-4 group cursor-pointer">
                     <div className="w-10 h-10 rounded-full border-2 border-purple-500/30 p-0.5 group-hover:border-purple-500 transition-colors">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full rounded-full bg-white/10" />
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || "Felix"}`} alt="User" className="w-full h-full rounded-full bg-white/10" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-white uppercase truncate">Waqar Ahmed</p>
-                        <p className="text-[9px] text-white/40 font-bold uppercase truncate">Founder Status</p>
+                        <p className="text-xs font-black text-white uppercase truncate">{user?.email?.split('@')[0] || "Founders Status"}</p>
+                        <p className="text-[9px] text-white/40 font-bold uppercase truncate">{user?.email || "Founder Status"}</p>
                     </div>
                 </div>
-                <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 text-white/40 text-[10px] font-black uppercase tracking-widest transition-all">
+                <button
+                    onClick={() => signOut()}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 text-white/40 text-[10px] font-black uppercase tracking-widest transition-all"
+                >
                     <LogOut size={14} />
                     Terminal Exit
                 </button>

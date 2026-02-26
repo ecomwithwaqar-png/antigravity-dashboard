@@ -99,7 +99,7 @@ function IntegrationCard({
         dataSources, connectShopify, connectGoogleSheets, connectMetaAds, connectGoogleAds,
         connectTikTokAds, connectSnapchatAds, connectDEX, connectPostEx, disconnectSource,
         isConnecting, syncNow, isSyncing,
-        loginWithTikTok, loginWithSnapchat
+        loginWithTikTok, loginWithSnapchat, saveIntegration
     } = useData();
     const [expanded, setExpanded] = useState(false);
     const [input1, setInput1] = useState("");
@@ -122,6 +122,7 @@ function IntegrationCard({
 
         if (type === "shopify") {
             connectShopify(input1.trim(), input2.trim(), selectedCurrency);
+            saveIntegration('shopify', input1.trim(), input1.trim().split('.')[0], input2.trim(), { shopDomain: input1.trim(), currency: selectedCurrency });
             onSuccess();
         } else if (type === "dex") {
             connectDEX(input1.trim());
@@ -134,9 +135,11 @@ function IntegrationCard({
             onSuccess();
         } else if (type === "meta_ads") {
             connectMetaAds(input1.trim(), input2.trim(), selectedCurrency);
+            saveIntegration('meta', input1.trim(), `Meta Account ${input1.trim()}`, input2.trim(), { currency: selectedCurrency });
             onSuccess();
         } else if (type === "google_ads") {
             connectGoogleAds(input1.trim(), input2.trim(), selectedCurrency);
+            saveIntegration('google', input1.trim(), `Google Ads ${input1.trim()}`, input2.trim(), { currency: selectedCurrency });
             onSuccess();
         } else if (type === "tiktok_ads") {
             connectTikTokAds(input1.trim(), input2.trim(), selectedCurrency);

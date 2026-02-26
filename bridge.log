@@ -40,3 +40,108 @@
 [2026-02-25T20:01:15.492Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
 [2026-02-25T20:01:15.615Z] [Bridge] GET /favicon.ico
 [2026-02-25T20:01:15.616Z] [Bridge] GET /meta.json
+[2026-02-25T20:04:07.082Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:04:08.549Z] [Bridge] GET /shopify/callback?code=40762b0e4f39bb278f9bbe651679276c&hmac=07986949b046c52281501c9e3203be54b89d0889475eb7b1692f2f0ba0c00651&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772049846
+[2026-02-25T20:04:08.550Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:04:09.008Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:04:09.142Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:04:09.144Z] [Bridge] GET /meta.json
+[2026-02-25T20:05:24.428Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:05:25.832Z] [Bridge] GET /shopify/callback?code=7091bd4f277941b9617fbbb27263e8c0&hmac=81a45ade223b7e0fb3d9ae8d495f550d7c24bbdb7faf5a4eaeccd3345df6df29&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772049923
+[2026-02-25T20:05:25.834Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:05:26.275Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:05:26.365Z] [Bridge] GET /meta.json
+[2026-02-25T20:05:26.371Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:06:44.808Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:06:46.110Z] [Bridge] GET /shopify/callback?code=a5c8ba6afe1b4bc875b905ab372f832b&hmac=30fa0a98c5445bbb314628df46ff3c0c0b21eafa16b6096fb8eb7b949c80eac4&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772050004
+[2026-02-25T20:06:46.111Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:06:46.544Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:06:46.648Z] [Bridge] GET /meta.json
+[2026-02-25T20:06:46.650Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:07:37.227Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:07:38.543Z] [Bridge] GET /shopify/callback?code=4d5e4dd8178fe2f6c42928ee99febaf7&hmac=091050bda4090941f9f77cb6e1b948782c6ca5bf498b8f5520cfdf2ffb304318&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772050056
+[2026-02-25T20:07:38.545Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:07:38.998Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:07:39.119Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:07:39.120Z] [Bridge] GET /meta.json
+[2026-02-25T20:09:48.229Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:09:49.714Z] [Bridge] GET /shopify/callback?code=889bcee5545212bff9985977ad6d5de5&hmac=ad235d44ca53e9eed01e0ab57ba9aa99da4d12641b75b69102ff7e54790b9771&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772050187
+[2026-02-25T20:09:49.717Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:09:50.218Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:09:50.365Z] [Bridge] GET /meta.json
+[2026-02-25T20:09:50.367Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:11:28.700Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:11:30.031Z] [Bridge] GET /shopify/callback?code=0be64478a390fd70bf82f74a1379ef6e&hmac=e5e77f4af6d34e396967a79189ee7d7125ee3450cfacf8eba3c5fb79befc96be&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772050288
+[2026-02-25T20:11:30.033Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:11:30.485Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:11:30.624Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:11:30.626Z] [Bridge] GET /meta.json
+[2026-02-25T20:14:29.257Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:14:30.604Z] [Bridge] GET /shopify/callback?code=8e90866e48fd615956a7bec31b9db8ee&hmac=8a11b0d9cab603b2b575baf8f553d85561ceedf35039f7d0961debd5d92d0ce0&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772050468
+[2026-02-25T20:14:30.605Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:14:31.096Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:14:31.168Z] [Bridge] GET /meta.json
+[2026-02-25T20:14:31.169Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:17:51.963Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:17:53.511Z] [Bridge] GET /shopify/callback?code=db3416a1d47041ff6dcf70c504df0e0e&hmac=c05e5c9a4879b375de4e0b590960bac8d64c68e39a351e9515724ccac13bee28&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772050671
+[2026-02-25T20:17:53.512Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:17:53.948Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:17:54.104Z] [Bridge] GET /meta.json
+[2026-02-25T20:17:54.105Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:18:07.920Z] [Bridge] OPTIONS /3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T20:18:07.923Z] [Bridge] GET /3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T20:18:07.923Z] [Proxy] Requesting: GET https://3pnuzs-rq.myshopify.com/admin/api/2024-01/orders.json?status=any&limit=250
+[2026-02-25T20:18:07.924Z] [Proxy] Headers: ["Content-Type","Accept","Host","User-Agent","X-Shopify-Access-Token","developer-token"]
+[2026-02-25T20:18:08.349Z] [Proxy] Response: 403 from 3pnuzs-rq.myshopify.com
+[2026-02-25T20:18:08.351Z] [Proxy Error Body] {"errors":"[API] This action requires merchant approval for read_orders scope."}
+[2026-02-25T20:23:58.716Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:24:00.041Z] [Bridge] GET /shopify/callback?code=74c2ecad525cc0d82e99e06c116d9260&hmac=0ed6c75ebefb444444fa7cde9e77722c658f581788c53ebc5c4b9cd8f1bea91c&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772051038
+[2026-02-25T20:24:00.043Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:24:00.541Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:24:00.704Z] [Bridge] GET /meta.json
+[2026-02-25T20:24:00.706Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:24:39.267Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-25T20:24:40.658Z] [Bridge] GET /shopify/callback?code=4120ab5f384d73fce430a5093e468077&hmac=6ca91c4987b2ea41fc1a3c1c984599ae26c9d3317909028433108f5ef0b4cc12&host=YWRtaW4uc2hvcGlmeS5jb20vc3RvcmUvM3BudXpzLXJx&shop=3pnuzs-rq.myshopify.com&timestamp=1772051078
+[2026-02-25T20:24:40.660Z] [Shopify-OAuth] Exchanging code for token for shop: 3pnuzs-rq.myshopify.com
+[2026-02-25T20:24:41.169Z] [Shopify-OAuth] Token exchange successful for 3pnuzs-rq.myshopify.com
+[2026-02-25T20:24:41.322Z] [Bridge] GET /meta.json
+[2026-02-25T20:24:41.323Z] [Bridge] GET /favicon.ico
+[2026-02-25T20:26:55.894Z] [Bridge] GET /shopify/auth?shop=3pnuzs-rq.myshopify.com
+[2026-02-26T09:48:39.260Z] [Bridge] OPTIONS /google/v18/customers:listAccessibleCustomers
+[2026-02-26T09:48:39.266Z] [Bridge] GET /google/v18/customers:listAccessibleCustomers
+[2026-02-26T09:48:39.266Z] [Proxy] Requesting: GET https://googleads.googleapis.com/v18/customers:listAccessibleCustomers
+[2026-02-26T09:48:39.267Z] [Proxy] Headers: ["Content-Type","Accept","Host","User-Agent","Authorization","developer-token"]
+[2026-02-26T09:48:39.749Z] [Proxy] Response: 404 from googleads.googleapis.com
+[2026-02-26T09:48:39.753Z] [Proxy Error Body] <!DOCTYPE html>
+<html lang=en>
+  <meta charset=utf-8>
+  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
+  <title>Error 404 (Not Found)!!1</title>
+  <style>
+    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
+  </style>
+  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
+  <p><b>404.</b> <ins>That’s an error.</ins>
+  <p>The requested URL <code>/v18/customers:listAccessibleCustomers</code> was not found on this server.  <ins>That’s all we know.</ins>
+
+[2026-02-26T09:48:39.759Z] [Bridge] GET /google/v18/customers:listAccessibleCustomers
+[2026-02-26T09:48:39.759Z] [Proxy] Requesting: GET https://googleads.googleapis.com/v18/customers:listAccessibleCustomers
+[2026-02-26T09:48:39.759Z] [Proxy] Headers: ["Content-Type","Accept","Host","User-Agent","Authorization","developer-token"]
+[2026-02-26T09:48:39.896Z] [Proxy] Response: 404 from googleads.googleapis.com
+[2026-02-26T09:48:39.900Z] [Proxy Error Body] <!DOCTYPE html>
+<html lang=en>
+  <meta charset=utf-8>
+  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
+  <title>Error 404 (Not Found)!!1</title>
+  <style>
+    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
+  </style>
+  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
+  <p><b>404.</b> <ins>That’s an error.</ins>
+  <p>The requested URL <code>/v18/customers:listAccessibleCustomers</code> was not found on this server.  <ins>That’s all we know.</ins>
+
+[2026-02-26T09:49:57.056Z] [Bridge] GET /shopify/auth?shop=1jz450-4j.myshopify.com
+[2026-02-26T09:49:58.800Z] [Bridge] GET /shopify/auth?shop=1jz450-4j.myshopify.com
+[2026-02-26T09:50:26.723Z] [Bridge] GET /shopify/auth?shop=infurionpk@gmail.com.myshopify.com
+[2026-02-26T09:50:34.382Z] [Bridge] GET /shopify/auth?shop=infurionpk@gmail.com.myshopify.com
+[2026-02-26T09:50:58.364Z] [Bridge] GET /shopify/auth?shop=1jz450-4j.myshopify.com

@@ -14,8 +14,8 @@ interface MetaAccountPickerProps {
 export function MetaAccountPicker({ onClose }: MetaAccountPickerProps) {
     const {
         fbAuth, metaBusinesses, metaAdAccounts,
-        loginWithFacebook, fetchMetaBusinesses, fetchMetaAdAccounts,
-        connectMetaAds, logoutFacebook, currency
+        fetchMetaBusinesses, fetchMetaAdAccounts,
+        connectMetaAds, logoutFacebook, currency, saveIntegration, connectWithNango
     } = useData();
 
     const [loading, setLoading] = useState(false);
@@ -49,10 +49,14 @@ export function MetaAccountPicker({ onClose }: MetaAccountPickerProps) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            await loginWithFacebook();
-        } catch (e) {
+            await connectWithNango('meta-ads', {}, currency);
+            toast.success("Neuro-Link confirmed with Meta. Discovering assets...");
+            fetchMetaBusinesses();
+        } catch (e: any) {
             console.error(e);
-            toast.error("Facebook Login failed. Check your browser's popup blocker or JSSDK settings.");
+            if (!e.message?.includes("User closed")) {
+                toast.error("Meta Login failed. Connection aborted.");
+            }
         } finally {
             setLoading(false);
         }
@@ -80,6 +84,16 @@ export function MetaAccountPicker({ onClose }: MetaAccountPickerProps) {
         const detectedCurrency = (account?.currency as any) || currency;
 
         connectMetaAds(cleanId, fbAuth?.accessToken || "", detectedCurrency);
+
+        // Save to Supabase for persistence
+        saveIntegration(
+            'meta',
+            cleanId,
+            account?.name || `Meta Account ${cleanId}`,
+            fbAuth?.accessToken || "",
+            { currency: detectedCurrency }
+        );
+
         onClose();
     };
 

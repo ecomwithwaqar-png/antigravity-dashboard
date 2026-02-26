@@ -13,9 +13,9 @@ interface GoogleAdsPickerProps {
 export function GoogleAdsPicker({ onClose }: GoogleAdsPickerProps) {
     const {
         googleAuth, googleAdAccounts,
-        loginWithGoogle, fetchGoogleAdsAccounts,
+        fetchGoogleAdsAccounts,
         connectGoogleAds, logoutGoogle, currency,
-        googleConfig
+        googleConfig, saveIntegration, connectWithNango
     } = useData();
 
     const [loading, setLoading] = useState(false);
@@ -41,17 +41,33 @@ export function GoogleAdsPicker({ onClose }: GoogleAdsPickerProps) {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            await loginWithGoogle();
-        } catch (e) {
+            await connectWithNango('google-ads', {}, currency);
+            toast.success("Neuro-Link confirmed with Google. Discovering accounts...");
+            fetchGoogleAdsAccounts();
+        } catch (e: any) {
             console.error(e);
+            if (!e.message?.includes("User closed")) {
+                toast.error("Google Login failed. Connection aborted.");
+            }
         } finally {
             setLoading(false);
         }
     };
 
     const handleSelectAccount = (id: string) => {
+        const account = googleAdAccounts.find(a => a.id === id);
         setConnecting(true);
         connectGoogleAds(id, googleAuth?.accessToken || "", currency);
+
+        // Save to Supabase for persistence
+        saveIntegration(
+            'google',
+            id,
+            account?.name || `Google Ads ${id}`,
+            googleAuth?.accessToken || "",
+            { currency }
+        );
+
         onClose();
     };
 

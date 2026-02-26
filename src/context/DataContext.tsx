@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from "react";
+import Nango from "@nangohq/frontend";
+import { supabase } from "@/lib/supabase";
 import Papa from "papaparse";
 import { toast } from "react-hot-toast";
 
@@ -57,6 +59,7 @@ export interface DataSource {
         accountId?: string;
         customerId?: string;
         token?: string;
+        nangoConnectionId?: string;
     };
 }
 
@@ -200,12 +203,14 @@ interface DataContextType {
     fetchTikTokAdAccounts: () => Promise<any[] | undefined>;
     fetchSnapAdAccounts: () => Promise<any[] | undefined>;
 
-    connectShopify: (domain: string, token: string, currency: CurrencyCode) => void;
+    connectShopify: (domain: string, token: string, currency: CurrencyCode, id?: string) => void;
     connectGoogleSheets: (spreadsheetUrl: string, currency: CurrencyCode) => void;
-    connectMetaAds: (accountId: string, token: string, currency: CurrencyCode) => void;
-    connectGoogleAds: (customerId: string, token: string, currency: CurrencyCode) => void;
+    connectMetaAds: (accountId: string, token: string, currency: CurrencyCode, id?: string) => void;
+    connectGoogleAds: (customerId: string, token: string, currency: CurrencyCode, id?: string) => void;
     connectTikTokAds: (accountId: string, token: string, currency: CurrencyCode) => void;
     connectSnapchatAds: (accountId: string, token: string, currency: CurrencyCode) => void;
+    connectWithNango: (integrationId: string, params: any, currency: CurrencyCode) => Promise<void>;
+    nango: any;
     connectDEX: (apiKey: string) => void;
     connectPostEx: (apiKey: string) => void;
     disconnectSource: (sourceId: string) => void;
@@ -239,6 +244,8 @@ interface DataContextType {
     courierInsights: Record<string, any>;
     verifyOrder: (orderId: string, status: "Confirmed" | "Canceled") => void;
     waTemplates: Record<string, string>;
+    saveIntegration: (platform: string, accountId: string, accountName: string, token: string, config?: any) => Promise<void>;
+    loadIntegrations: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -289,6 +296,14 @@ function statusIs(row: DataRecord, key: string | undefined, ...values: string[])
     if (!key) return false;
     const v = String(row[key] || "").toLowerCase().trim();
     return values.some(val => v.includes(val.toLowerCase()));
+}
+
+const nango = new Nango({
+    publicKey: import.meta.env.VITE_NANGO_PUBLIC_KEY || ""
+});
+
+if (!import.meta.env.VITE_NANGO_PUBLIC_KEY) {
+    console.warn("⚠️ VITE_NANGO_PUBLIC_KEY is not defined in .env. Neural Connect will be disabled.");
 }
 
 // ─── Simulated data generators ──────────────────────────────────────────────
@@ -423,6 +438,87 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [googleAdAccounts, setGoogleAdAccounts] = useState<any[]>([]);
     const [tiktokAdAccounts, setTiktokAdAccounts] = useState<any[]>([]);
     const [snapAdAccounts, setSnapAdAccounts] = useState<any[]>([]);
+    const [nangoConnections, setNangoConnections] = useState<Record<string, string>>({}); // integration_id -> connection_id
+
+    const getAuthHeaders = useCallback((source?: DataSource, nangoIntegId?: string) => {
+        const headers: any = { "Content-Type": "application/json" };
+
+        // Priority 1: Check session-active Nango connections
+        if (nangoIntegId && nangoConnections[nangoIntegId]) {
+            headers["x-nango-connection-id"] = nangoConnections[nangoIntegId];
+            headers["x-nango-integration-id"] = nangoIntegId;
+            return headers;
+        }
+
+        // Priority 2: Check stored source config
+        const token = source?.config?.token;
+        if (token === "nango_managed" && source?.config?.nangoConnectionId) {
+            headers["x-nango-connection-id"] = source.config.nangoConnectionId;
+            headers["x-nango-integration-id"] = nangoIntegId;
+        } else if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        return headers;
+    }, [nangoConnections]);
+
+    const loadIntegrations = useCallback(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('integrations')
+            .select('*')
+            .filter('user_id', 'eq', user.id);
+
+        if (error) {
+            console.error("Error loading integrations:", error);
+            return;
+        }
+
+        if (data) {
+            data.forEach(integ => {
+                if (integ.platform === 'shopify') {
+                    connectShopify(integ.config.shopDomain, integ.access_token, integ.config.currency || 'PKR');
+                } else if (integ.platform === 'meta') {
+                    connectMetaAds(integ.account_id, integ.access_token, integ.config.currency || 'PKR');
+                } else if (integ.platform === 'google') {
+                    connectGoogleAds(integ.account_id, integ.access_token, integ.config.currency || 'PKR');
+                }
+            });
+        }
+    }, []);
+
+    const saveIntegration = useCallback(async (platform: string, accountId: string, accountName: string, token: string, config: any = {}) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            toast.error("You must be logged in to save integrations");
+            return;
+        }
+
+        const { error } = await supabase.from('integrations').upsert({
+            user_id: user.id,
+            platform,
+            account_id: accountId,
+            account_name: accountName,
+            access_token: token,
+            config,
+            last_sync: new Date().toISOString()
+        }, { onConflict: 'user_id,platform,account_id' });
+
+        if (error) {
+            toast.error(`Cloud Sync Failed: ${error.message}`);
+        } else {
+            toast.success(`${platform.toUpperCase()} integration secured in cloud`);
+        }
+    }, []);
+
+    useEffect(() => {
+        supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_IN') {
+                loadIntegrations();
+            }
+        });
+    }, [loadIntegrations]);
 
     const loginWithFacebook = useCallback(async () => {
         return new Promise<void>((resolve, reject) => {
@@ -567,7 +663,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         try {
             const bridgeUrl = `${BRIDGE_URL}/meta/v18.0/me/businesses?fields=name,id`;
             const response = await fetch(bridgeUrl, {
-                headers: { "Authorization": `Bearer ${fbAuth.accessToken}` }
+                headers: getAuthHeaders(undefined, 'meta-ads')
             });
             const data = await response.json();
             const businesses = data.data || [];
@@ -578,7 +674,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         } catch (e) {
             toast.error("Failed to fetch businesses");
         }
-    }, [fbAuth]);
+    }, [fbAuth, getAuthHeaders]);
 
     const fetchMetaAdAccounts = useCallback(async (businessId: string) => {
         if (!fbAuth) return;
@@ -594,7 +690,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             // Loop to handle potential pagination from Meta
             while (nextUrl) {
                 const response = await fetch(nextUrl, {
-                    headers: { "Authorization": `Bearer ${fbAuth.accessToken}` }
+                    headers: getAuthHeaders(undefined, 'meta-ads')
                 });
                 const data = await response.json();
 
@@ -614,7 +710,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             // Fallback for businesses if the direct adaccounts list is empty
             if (allAccounts.length === 0 && businessId !== 'me') {
                 const altUrl = `${BRIDGE_URL}/meta/v18.0/${businessId}/owned_ad_accounts?fields=name,id,currency&limit=100`;
-                const altRes = await fetch(altUrl, { headers: { "Authorization": `Bearer ${fbAuth.accessToken}` } });
+                const altRes = await fetch(altUrl, { headers: getAuthHeaders(undefined, 'meta-ads') });
                 const altData = await altRes.json();
                 allAccounts = altData.data || [];
             }
@@ -625,63 +721,45 @@ export function DataProvider({ children }: { children: ReactNode }) {
             console.error("Fetch Ad Accounts Error:", e);
             toast.error("Failed to discover all ad accounts");
         }
-    }, [fbAuth]);
+    }, [fbAuth, getAuthHeaders]);
 
     const fetchGoogleAdsAccounts = useCallback(async () => {
         if (!googleAuth) return;
-        setGoogleAdAccounts([]); // Clear previous results
         try {
             const bridgeUrl = `${BRIDGE_URL}/google/v18/customers:listAccessibleCustomers`;
+            const headerObj = getAuthHeaders(undefined, 'google-ads');
+
+            if (!headerObj["x-nango-connection-id"] && googleAuth.accessToken !== "nango_managed") {
+                headerObj["Authorization"] = `Bearer ${googleAuth.accessToken}`;
+            }
+
             const response = await fetch(bridgeUrl, {
                 headers: {
-                    "Authorization": `Bearer ${googleAuth.accessToken}`,
-                    "Content-Type": "application/json"
+                    ...headerObj,
+                    "developer-token": googleConfig.developerToken,
                 }
             });
 
-            if (!response.ok) {
-                const text = await response.text();
-                console.error("Bridge Error Status:", response.status, text);
-                try {
-                    const errProj = JSON.parse(text);
-                    toast.error(`Google: ${errProj.error?.message || "API Error"}`);
-                } catch (e) {
-                    toast.error(`Bridge Status: ${response.status}`);
-                }
-                return;
+            if (response.ok) {
+                const data = await response.json();
+                const accounts = (data.resourceNames || []).map((name: string) => ({
+                    id: name.replace('customers/', ''),
+                    name: `Google Account ${name.replace('customers/', '')}`
+                }));
+                setGoogleAdAccounts(accounts);
+                return accounts;
             }
-
-            const data = await response.json();
-
-            if (data.error) {
-                console.error("Google API Error:", data.error);
-                toast.error(`Google: ${data.error.message || "Unknown API Error"}`);
-                return;
-            }
-
-            const accounts = (data.resourceNames || []).map((name: string) => ({
-                id: name.split('/')[1],
-                name: `Account ${name.split('/')[1]}`
-            }));
-
-            setGoogleAdAccounts(accounts);
-            return accounts;
-        } catch (e: any) {
-            console.error("Fetch Google Error:", e);
-            if (e.name === 'SyntaxError') {
-                toast.error("Bridge returned invalid data");
-            } else {
-                toast.error("Bridge connection failed");
-            }
+        } catch (e) {
+            console.error("Google discovery failed:", e);
         }
-    }, [googleAuth, googleConfig.developerToken]);
+    }, [googleAuth, googleConfig.developerToken, getAuthHeaders]);
 
     const fetchTikTokAdAccounts = useCallback(async () => {
         if (!tiktokAuth) return;
         try {
             const bridgeUrl = `${BRIDGE_URL}/tiktok/v1.3/advertiser/info/`;
             const response = await fetch(bridgeUrl, {
-                headers: { "Authorization": `Bearer ${tiktokAuth.accessToken}` }
+                headers: getAuthHeaders(undefined, 'tiktok-ads')
             });
             const data = await response.json();
             const list = data.data?.list || [];
@@ -690,14 +768,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         } catch (e) {
             console.error(e);
         }
-    }, [tiktokAuth]);
+    }, [tiktokAuth, getAuthHeaders]);
 
     const fetchSnapAdAccounts = useCallback(async () => {
         if (!snapAuth) return;
         try {
             const bridgeUrl = `${BRIDGE_URL}/snapchat/v1/me/adaccounts`;
             const response = await fetch(bridgeUrl, {
-                headers: { "Authorization": `Bearer ${snapAuth.accessToken}` }
+                headers: getAuthHeaders(undefined, 'snapchat-ads')
             });
             const data = await response.json();
             const list = data.adaccounts || [];
@@ -706,7 +784,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         } catch (e) {
             console.error(e);
         }
-    }, [snapAuth]);
+    }, [snapAuth, getAuthHeaders]);
 
     const verifyOrder = useCallback((orderId: string, status: "Confirmed" | "Canceled") => {
         setAllSourceData(prev => {
@@ -1162,13 +1240,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return { dailyProfitability: dailyArr, weeklyProfitability: weeklyArr, monthlyProfitability: monthlyArr };
     }, [data, columns, allSourceData, currentViewId, dataSources]);
 
-    const loadDataInternal = useCallback((records: DataRecord[], _cols: string[], type: DataSourceType, name: string, cur?: CurrencyCode, config?: any) => {
-        const id = `${type}-${Date.now()}`;
-        setAllSourceData(prev => ({ ...prev, [id]: records }));
-        setCurrentViewId(id);
+    const loadDataInternal = useCallback((records: DataRecord[], _cols: string[], type: DataSourceType, name: string, cur?: CurrencyCode, config?: any, id?: string) => {
+        const finalId = id || `${type}-${Date.now()}`;
+        setAllSourceData(prev => ({ ...prev, [finalId]: records }));
+        setCurrentViewId(finalId);
         setActiveSource(type);
         if (cur) setCurrencyState(cur);
-        setDataSources(prev => [...prev, { id, type, name, connectedAt: new Date(), status: "connected", recordCount: records.length, currency: cur || currency, syncIntervalMs: 0, config }]);
+
+        setDataSources(prev => {
+            const filtered = prev.filter(s => s.id !== finalId);
+            return [...filtered, {
+                id: finalId,
+                type,
+                name,
+                connectedAt: new Date(),
+                status: "connected",
+                recordCount: records.length,
+                currency: cur || currency,
+                syncIntervalMs: 0,
+                config
+            }];
+        });
         setLastSyncTime(new Date());
     }, [currency]);
 
@@ -1189,25 +1281,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         // Try bridge first to bypass CORS
         let response;
+        const headers: any = { "Content-Type": "application/json" };
+        if (token === "nango_managed") {
+            const source = dataSources.find(s => s.config?.shopDomain === shop && s.config?.token === "nango_managed");
+            if (source?.config?.nangoConnectionId) {
+                headers["x-nango-connection-id"] = source.config.nangoConnectionId;
+                headers["x-nango-integration-id"] = "shopify";
+            }
+        } else {
+            headers["X-Shopify-Access-Token"] = token;
+        }
+
         try {
-            response = await fetch(bridgeUrl, {
-                headers: {
-                    "X-Shopify-Access-Token": token,
-                    "Content-Type": "application/json",
-                }
-            });
+            response = await fetch(bridgeUrl, { headers });
         } catch (e) {
             console.warn("Bridge not available, falling back to direct (CORS may block)");
-            response = await fetch(directUrl, {
-                headers: {
-                    "X-Shopify-Access-Token": token,
-                    "Content-Type": "application/json",
-                }
-            });
+            response = await fetch(directUrl, { headers });
         }
 
         if (!response.ok) {
-            throw new Error(response.status === 401 ? "Invalid Access Token" : "Failed to fetch from Shopify");
+            let errorDetail = "";
+            try {
+                const errBody = await response.json();
+                errorDetail = errBody.errors || errBody.error_description || "";
+            } catch (e) { }
+
+            const baseMsg = response.status === 401 ? "Invalid Access Token" : "Shopify Sync Error";
+            throw new Error(errorDetail ? `${baseMsg}: ${errorDetail}` : `${baseMsg} (${response.status})`);
         }
 
         const rawData = await response.json();
@@ -1272,7 +1372,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const connectShopify = useCallback(async (domain: string, token: string, cur: CurrencyCode) => {
+    const connectShopify = useCallback(async (domain: string, token: string, cur: CurrencyCode, id?: string) => {
         setIsConnecting(true);
         const loadingToast = toast.loading(`Connecting to ${domain}...`);
 
@@ -1280,14 +1380,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
             if (token === "demo" || domain.toLowerCase().includes("demo")) {
                 await new Promise(r => setTimeout(r, 1000));
                 const d = generateShopifyData(cur);
-                loadDataInternal(d, [], "shopify", domain, cur, { shopDomain: domain, token: "demo" });
+                loadDataInternal(d, [], "shopify", domain, cur, { shopDomain: domain, token: "demo" }, id);
                 toast.success("Connected to Demo Store", { id: loadingToast });
                 setIsConnecting(false);
                 return;
             }
 
             const flattened = await fetchShopifyData(domain, token);
-            loadDataInternal(flattened, [], "shopify", domain, cur, { shopDomain: domain, token });
+            loadDataInternal(flattened, [], "shopify", domain, cur, { shopDomain: domain, token }, id);
             toast.success(`Successfully synced ${flattened.length} orders!`, { id: loadingToast });
 
         } catch (err: any) {
@@ -1311,7 +1411,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }, 1200);
     }, [loadDataInternal]);
 
-    const connectMetaAds = useCallback(async (accId: string, token: string, cur: CurrencyCode) => {
+    const connectMetaAds = useCallback(async (accId: string, token: string, cur: CurrencyCode, id?: string) => {
         setIsConnecting(true);
         const loadingToast = toast.loading(`Connecting to Meta Account ${accId}...`);
 
@@ -1319,7 +1419,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             if (token === "demo") {
                 await new Promise(r => setTimeout(r, 1000));
                 const d = generateMetaAdsData(cur);
-                loadDataInternal(d, [], "meta_ads", `Meta (${accId})`, cur, { accountId: accId, token: "demo" });
+                loadDataInternal(d, [], "meta_ads", `Meta (${accId})`, cur, { accountId: accId, token: "demo" }, id);
                 toast.success("Connected to Demo Meta", { id: loadingToast });
                 setIsConnecting(false);
                 return;
@@ -1350,7 +1450,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 currency: cur
             }));
 
-            loadDataInternal(flattened, [], "meta_ads", `Meta (${accId})`, cur, { accountId: accId, token });
+            loadDataInternal(flattened, [], "meta_ads", `Meta (${accId})`, cur, { accountId: accId, token }, id);
             toast.success(`Synced Meta insights for ${flattened.length} days!`, { id: loadingToast });
 
         } catch (err: any) {
@@ -1361,7 +1461,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
     }, [loadDataInternal]);
 
-    const connectGoogleAds = useCallback(async (customerId: string, token: string, cur: CurrencyCode) => {
+    const connectGoogleAds = useCallback(async (customerId: string, token: string, cur: CurrencyCode, id?: string) => {
         setIsConnecting(true);
         const loadingToast = toast.loading(`Connecting to Google Ads ${customerId}...`);
 
@@ -1369,7 +1469,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             if (token === "demo") {
                 await new Promise(r => setTimeout(r, 1000));
                 const d = generateGoogleAdsData(cur);
-                loadDataInternal(d, [], "google_ads", `Google (Demo)`, cur, { customerId, token: "demo" });
+                loadDataInternal(d, [], "google_ads", `Google (Demo)`, cur, { customerId, token: "demo" }, id);
                 toast.success("Connected to Demo Google Ads", { id: loadingToast });
                 setIsConnecting(false);
                 return;
@@ -1426,7 +1526,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 currency: cur
             }));
 
-            loadDataInternal(flattened, [], "google_ads", `Google (${customerId})`, cur, { customerId, token });
+            loadDataInternal(flattened, [], "google_ads", `Google (${customerId})`, cur, { customerId, token }, id);
             toast.success(`Synced ${flattened.length} days of Google Ad spend!`, { id: loadingToast });
 
         } catch (err: any) {
@@ -1465,6 +1565,51 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }, 1500);
     }, [loadDataInternal]);
 
+    const connectWithNango = useCallback(async (integrationId: string, params: any, currency: CurrencyCode) => {
+        setIsConnecting(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            toast.error("Please login to connect accounts");
+            setIsConnecting(false);
+            return;
+        }
+
+        const connectionId = `${user.id}-${integrationId}`;
+
+        try {
+            // params can include { shop: 'store.myshopify.com' } for Shopify
+            await nango.auth(integrationId, connectionId, params);
+            toast.success(`${integrationId.charAt(0).toUpperCase() + integrationId.slice(1)} connected via Neural Link!`);
+
+            // Track in session for immediate discovery
+            setNangoConnections(prev => ({ ...prev, [integrationId]: connectionId }));
+
+            if (integrationId === 'meta-ads') {
+                setFbAuth({ accessToken: "nango_managed", name: "Meta Managed Link" });
+            }
+            if (integrationId === 'google-ads') {
+                setGoogleAuth({ accessToken: "nango_managed", name: "Google Managed Link" });
+            }
+
+            // For Shopify, we need to save the domain too
+            const accountId = params?.shop || connectionId;
+            const accountName = params?.shop || `${integrationId} Account`;
+
+            await saveIntegration(integrationId, accountId, accountName, "nango_managed", { ...params, currency, nangoConnectionId: connectionId });
+
+            // Trigger load to refresh the data
+            loadIntegrations();
+        } catch (err: any) {
+            console.error("Nango Auth Error:", err);
+            // Nango.auth promise rejects if the user closes the popup or if there's an error
+            if (err.message && !err.message.includes("User closed")) {
+                toast.error(err.message || "Neural Handshake failed");
+            }
+        } finally {
+            setIsConnecting(false);
+        }
+    }, [nango, saveIntegration, loadIntegrations]);
+
     const connectPostEx = useCallback((apiKey: string) => {
         setIsConnecting(true);
         const loadingToast = toast.loading("Connecting to PostEx...");
@@ -1475,7 +1620,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }, 1500);
     }, [loadDataInternal]);
 
-    const disconnectSource = useCallback((id: string) => {
+    const disconnectSource = useCallback(async (id: string) => {
         setAllSourceData(prev => {
             const next = { ...prev };
             delete next[id];
@@ -1483,6 +1628,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         setDataSources(prev => prev.filter(s => s.id !== id));
         if (currentViewId === id) setCurrentViewId("collective");
+
+        // Remove from Cloud Persistence
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            await supabase.from('integrations').delete().match({ user_id: user.id, account_id: id });
+        }
+
+        toast.success("Source disconnected and removed from cloud");
     }, [currentViewId]);
 
     const linkAdAccount = useCallback((shopId: string, adId: string) => {
@@ -1516,16 +1669,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
             for (const source of metaSources) {
                 try {
                     const accId = source.config?.accountId;
-                    const token = source.config?.token;
                     const cur = source.currency;
 
                     // Sync with maximum daily history
                     const bridgeUrl = `http://localhost:3001/meta/v18.0/act_${accId}/insights?fields=spend,date_start&level=account&time_increment=1&date_preset=maximum`;
                     const response = await fetch(bridgeUrl, {
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        }
+                        headers: getAuthHeaders(source, 'meta-ads')
                     });
 
                     if (response.ok) {
@@ -1562,6 +1711,40 @@ export function DataProvider({ children }: { children: ReactNode }) {
                     }
                 } catch (e) {
                     console.error(`Failed to sync Meta source ${source.name}:`, e);
+                }
+            }
+
+            // Sync Google Ads sources
+            const googleSources = dataSources.filter(s => s.type === "google_ads" && s.config?.token !== "demo");
+            for (const source of googleSources) {
+                try {
+                    const customerId = source.config?.customerId;
+                    const cleanId = customerId?.replace(/-/g, '');
+                    const bridgeUrl = `http://localhost:3001/google/v18/customers/${cleanId}/googleAds:search`;
+
+                    const response = await fetch(bridgeUrl, {
+                        method: 'POST',
+                        headers: getAuthHeaders(source, 'google-ads'),
+                        body: JSON.stringify({
+                            query: `SELECT metrics.cost_micros, segments.date FROM customer WHERE segments.date DURING LAST_30_DAYS`
+                        })
+                    });
+
+                    if (response.ok) {
+                        const rawData = await response.json();
+                        const flattened: DataRecord[] = (rawData.results || []).map((row: any) => ({
+                            date: row.segments.date,
+                            google_spend: (parseFloat(row.metrics.cost_micros) / 1000000).toFixed(2),
+                            source_id: customerId,
+                            currency: source.currency
+                        }));
+                        setAllSourceData(prev => ({ ...prev, [source.id]: flattened }));
+                        setDataSources(prev => prev.map(s => s.id === source.id ? { ...s, recordCount: flattened.length, lastSync: new Date() } : s));
+                    } else {
+                        console.error(`Google Ads sync for ${source.name} failed:`, await response.text());
+                    }
+                } catch (e) {
+                    console.error(`Failed to sync Google Ads source ${source.name}:`, e);
                 }
             }
 
@@ -1661,6 +1844,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             estimatedOpsPercent, setEstimatedOpsPercent,
             ledgerEntries, addLedgerEntry, removeLedgerEntry,
             citySummary, verificationSummary, productPerformance, verifyOrder, waTemplates, courierInsights,
+            saveIntegration, loadIntegrations, connectWithNango, nango,
         }}>
             {children}
         </DataContext.Provider>

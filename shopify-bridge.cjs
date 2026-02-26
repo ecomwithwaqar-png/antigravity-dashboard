@@ -8,8 +8,10 @@ try {
     const envPath = require('path').join(__dirname, '.env');
     if (fs.existsSync(envPath)) {
         const envContent = fs.readFileSync(envPath, 'utf8');
-        envContent.split('\n').forEach(line => {
-            const [key, ...value] = line.split('=');
+        envContent.split(/\r?\n/).forEach(line => {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) return;
+            const [key, ...value] = trimmed.split('=');
             if (key && value) process.env[key.trim()] = value.join('=').trim();
         });
     }
@@ -23,6 +25,7 @@ const MASTER_CONFIG = {
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '695971374779-lgutit2vr7hseki58mo07ksphdg33i3g.apps.googleusercontent.com',
     SHOPIFY_API_KEY: process.env.SHOPIFY_API_KEY || '',
     SHOPIFY_API_SECRET: process.env.SHOPIFY_API_SECRET || '',
+    NANGO_SECRET_KEY: process.env.NANGO_SECRET_KEY || '',
     REDIRECT_URI: 'http://localhost:3001/shopify/callback'
 };
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,7 +82,16 @@ const server = http.createServer((req, res) => {
     if (req.url.startsWith('/shopify/auth')) {
         const shop = params.get('shop');
         if (!shop) return res.end('Missing shop parameter');
-        const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${MASTER_CONFIG.SHOPIFY_API_KEY}&scope=read_orders,read_products&redirect_uri=${MASTER_CONFIG.REDIRECT_URI}`;
+
+        if (!MASTER_CONFIG.SHOPIFY_API_KEY) {
+            log(`[Shopify-Auth] ERROR: SHOPIFY_API_KEY is empty in .env!`);
+            return res.end('Error: SHOPIFY_API_KEY is not configured in bridge .env');
+        }
+
+        const scopes = 'read_orders,read_products,read_inventory';
+        const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${MASTER_CONFIG.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${encodeURIComponent(MASTER_CONFIG.REDIRECT_URI)}`;
+
+        log(`[Shopify-Auth] Redirecting to Shopify: ${authUrl}`);
         res.writeHead(302, { 'Location': authUrl });
         return res.end();
     }
@@ -119,37 +131,45 @@ const server = http.createServer((req, res) => {
                     const data = JSON.parse(resBody);
                     if (exchangeRes.statusCode === 200 && data.access_token) {
                         const accessToken = data.access_token;
-                        log(`[Shopify-OAuth] Token exchange successful for ${shop}`);
+                        log(`[Shopify-OAuth] SUCCESS: Captured token for ${shop}. (Token: ${accessToken.substring(0, 10)}...)`);
 
                         res.writeHead(200, { 'Content-Type': 'text/html' });
                         res.end(`
                             <html>
-                                <body style="background:#0f0a1a; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0;">
-                                    <div style="background:rgba(255,255,255,0.05); padding:40px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); text-align:center; max-width: 400px;">
-                                        <div style="width:60px; height:60px; background:#10b981; border-radius:20px; display:flex; align-items:center; justify-content:center; margin: 0 auto 20px;">
+                                <body style="background:#0f0a1a; color:white; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; padding:20px; box-sizing:border-box;">
+                                    <div style="background:rgba(255,255,255,0.05); padding:40px; border-radius:30px; border:1px solid rgba(255,255,255,0.1); text-align:center; max-width: 450px; width:100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                                        <div style="width:60px; height:60px; background:#10b981; border-radius:20px; display:flex; align-items:center; justify-content:center; margin: 0 auto 20px; box-shadow: 0 0 20px rgba(16,185,129,0.3);">
                                             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                         </div>
-                                        <h1 style="color:#10b981; margin:0 0 10px 0;">Sync Established</h1>
-                                        <p style="opacity:0.7; font-size:14px; line-height:1.5;">Your store connection is now live. This window will close automatically.</p>
-                                        <button onclick="window.close()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:12px 30px; border-radius:15px; font-weight:bold; cursor:pointer; margin-top:20px; transition: background 0.2s;">Close Window</button>
+                                        <h1 style="color:#10b981; margin:0 0 10px 0; font-size:24px;">Sync Established</h1>
+                                        <p style="opacity:0.7; font-size:14px; line-height:1.5; margin-bottom:20px;">HANDSHAKE SUCCESSFUL! Copy this token to the dashboard:</p>
+                                        
+                                        <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+                                            <code style="color:#10b981; font-family:monospace; font-size:14px; word-break:break-all; display:block;">${accessToken}</code>
+                                        </div>
+
+                                        <div id="status" style="margin-top:10px; font-size:12px; color:#3b82f6;">🚀 Communicating with dashboard...</div>
+                                        <button onclick="window.close()" style="background:transparent; color:rgba(255,255,255,0.3); border:none; padding:10px; cursor:pointer; font-size:11px; margin-top:20px;">Close this window</button>
                                     </div>
                                     <script>
-                                        if (window.opener) {
-                                            window.opener.postMessage({ 
-                                                type: 'SHOPIFY_AUTH_SUCCESS', 
-                                                token: '${accessToken}', 
-                                                shop: '${shop}' 
-                                            }, '*');
-                                            setTimeout(() => window.close(), 1500);
+                                        const token = '${accessToken}';
+                                        function sendHandshake() {
+                                            if (window.opener) {
+                                                window.opener.postMessage({ type: 'SHOPIFY_AUTH_SUCCESS', token, shop: '${shop}' }, '*');
+                                                document.getElementById('status').innerText = "✅ Sent to Dashboard!";
+                                                setTimeout(() => window.close(), 1500);
+                                            }
                                         }
+                                        sendHandshake();
+                                        setTimeout(sendHandshake, 1000);
                                     </script>
                                 </body>
                             </html>
                         `);
                     } else {
-                        log(`[Shopify-OAuth] Exchange failed: ${resBody}`);
-                        res.writeHead(exchangeRes.statusCode || 500);
-                        res.end(`Exchange Failed: ${data.error_description || data.error || resBody}`);
+                        log(`[Shopify-OAuth] FAILED: ${JSON.stringify(data)}`);
+                        res.writeHead(400);
+                        res.end(`OAuth Error: ${data.errors || data.error_description || 'Unknown error'}`);
                     }
                 } catch (e) {
                     log(`[Shopify-OAuth] Parse Error: ${e.message} | Body: ${resBody}`);
@@ -217,20 +237,32 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    const nangoConnId = req.headers['x-nango-connection-id'];
+    const nangoIntegId = req.headers['x-nango-integration-id'];
+
     const headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Host': targetHost,
+        'Host': nangoConnId ? 'api.nango.dev' : targetHost,
         'User-Agent': 'AntiGravity-Dashboard/1.0'
     };
 
-    if (req.headers['authorization']) headers['Authorization'] = req.headers['authorization'];
-    if (req.headers['x-shopify-access-token']) headers['X-Shopify-Access-Token'] = req.headers['x-shopify-access-token'];
+    if (nangoConnId && nangoIntegId) {
+        log(`[Bridge] Nango Neural Proxy active: ${nangoIntegId} (${nangoConnId})`);
+        headers['Authorization'] = `Bearer ${MASTER_CONFIG.NANGO_SECRET_KEY}`;
+        headers['Provider-Config-Key'] = nangoIntegId;
+        headers['Connection-Id'] = nangoConnId;
+        targetHost = 'api.nango.dev';
+        targetPath = `/proxy${targetPath}`;
+    } else {
+        if (req.headers['authorization']) headers['Authorization'] = req.headers['authorization'];
+        if (req.headers['x-shopify-access-token']) headers['X-Shopify-Access-Token'] = req.headers['x-shopify-access-token'];
 
-    // Inject master dev token if not provided by frontend
-    const devToken = req.headers['developer-token'] || MASTER_CONFIG.GOOGLE_DEVELOPER_TOKEN;
-    if (devToken && devToken !== 'YOUR_DEVELOPER_TOKEN_HERE') {
-        headers['developer-token'] = devToken;
+        // Inject master dev token if not provided by frontend
+        const devToken = req.headers['developer-token'] || MASTER_CONFIG.GOOGLE_DEVELOPER_TOKEN;
+        if (devToken && devToken !== 'YOUR_DEVELOPER_TOKEN_HERE') {
+            headers['developer-token'] = devToken;
+        }
     }
 
     const options = {

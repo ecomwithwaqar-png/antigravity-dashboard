@@ -10,7 +10,7 @@ interface ShopifyPickerProps {
 }
 
 export function ShopifyPicker({ onClose }: ShopifyPickerProps) {
-    const { connectShopify, currency } = useData();
+    const { connectShopify, currency, saveIntegration, connectWithNango } = useData();
     const [domain, setDomain] = useState("");
     const [token, setToken] = useState("");
     const [loading, setLoading] = useState(false);
@@ -34,6 +34,16 @@ export function ShopifyPicker({ onClose }: ShopifyPickerProps) {
                 (async () => {
                     try {
                         await connectShopify(finalDomain, token, currency);
+
+                        // Save to Supabase for persistence
+                        saveIntegration(
+                            'shopify',
+                            finalDomain,
+                            finalDomain.split('.')[0],
+                            token,
+                            { shopDomain: finalDomain, currency }
+                        );
+
                         onClose();
                     } catch (err: any) {
                         console.error("Auto-sync failed:", err);
@@ -47,27 +57,42 @@ export function ShopifyPicker({ onClose }: ShopifyPickerProps) {
         return () => window.removeEventListener('message', handleMessage);
     }, [connectShopify, currency, onClose]);
 
-    const handleOneClick = () => {
+    const handleOneClick = async () => {
         if (!domain) {
             toast.error("Enter your store domain first");
             return;
         }
         const shop = domain.includes(".myshopify.com") ? domain : `${domain}.myshopify.com`;
-        const bridgeUrl = `http://localhost:3001/shopify/auth?shop=${shop}`;
-        window.open(bridgeUrl, 'ShopifyAuth', 'width=600,height=800');
+
+        try {
+            await connectWithNango('shopify', { shop }, currency);
+            onClose();
+        } catch (e) {
+            console.error("Nango Shopify Error:", e);
+        }
     };
 
     const handleConnect = async () => {
         const finalDomain = domain.includes(".") ? domain : `${domain}.myshopify.com`;
 
-        if (token !== "demo" && !token.startsWith("shpat_") && !token.startsWith("shpk_")) {
-            toast.error("Invalid token format");
+        if (token !== "demo" && !token.startsWith("shpat_") && !token.startsWith("shpk_") && !token.startsWith("shpca_")) {
+            toast.error("Invalid token format (shpat_, shpk_, or shpca_)");
             return;
         }
 
         setLoading(true);
         try {
             await connectShopify(finalDomain.trim(), token.trim(), currency);
+
+            // Save to Supabase for persistence
+            saveIntegration(
+                'shopify',
+                finalDomain.trim(),
+                finalDomain.trim().split('.')[0],
+                token.trim(),
+                { shopDomain: finalDomain.trim(), currency }
+            );
+
             onClose();
         } catch (e) {
             console.error(e);
@@ -190,7 +215,7 @@ export function ShopifyPicker({ onClose }: ShopifyPickerProps) {
                                     disabled={loading || !token}
                                     className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-bold text-white shadow-xl shadow-emerald-600/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    {loading ? <Loader2 className="animate-spin" size={20} /> : <><Zap size={18} /> Establish Sync</>}
+                                    {loading ? <Loader2 className="animate-spin" size={20} /> : <><Zap size={18} /> Establish Sync (shpat_...)</>}
                                 </button>
                             </div>
                         </div>
